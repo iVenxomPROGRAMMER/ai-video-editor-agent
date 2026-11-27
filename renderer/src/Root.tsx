@@ -1,5 +1,5 @@
 import React from "react";
-import { Composition } from "remotion";
+import { Composition, CalculateMetadataFunction } from "remotion";
 import { MainComposition, ProjectData } from "./Composition";
 
 const defaultProject: ProjectData = {
@@ -29,6 +29,26 @@ const defaultProject: ProjectData = {
   ],
 };
 
+const calculateMetadata: CalculateMetadataFunction<{ project: ProjectData }> = ({
+  props,
+}) => {
+  const fps = props.project?.project_meta?.fps ?? 30;
+  const width = props.project?.project_meta?.resolution?.width ?? 1080;
+  const height = props.project?.project_meta?.resolution?.height ?? 1920;
+
+  const totalFrames = (props.project?.scenes ?? []).reduce((sum, scene) => {
+    const sceneFrames = Math.max(1, Math.round((scene.duration_sec ?? 3.0) * fps));
+    return sum + sceneFrames;
+  }, 0);
+
+  return {
+    durationInFrames: Math.max(1, totalFrames),
+    fps,
+    width,
+    height,
+  };
+};
+
 export const RemotionRoot: React.FC = () => {
   return (
     <Composition
@@ -39,6 +59,7 @@ export const RemotionRoot: React.FC = () => {
       width={1080}
       height={1920}
       defaultProps={{ project: defaultProject }}
+      calculateMetadata={calculateMetadata}
     />
   );
 };
